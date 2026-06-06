@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+
+/* =========================================
+   Tema Claro (Google Cloud Style)
+   ========================================= */
+:root {
+  --bg-page:       #F8F9FA;
+  --bg-card:       #FFFFFF;
+  --bg-sidebar:    #FFFFFF;
+  --bg-header:     #FFFFFF;
+  --bg-input:      #FFFFFF;
+  --bg-code:       #F1F3F4;
+  --bg-hover:      #F1F3F4;
+  --bg-selected:   #E8F0FE;
+  --bg-badge:      #E8F0FE;
+
+  --border:        #DADCE0;
+  --border-focus:  #1A73E8;
+  --border-strong: #BDC1C6;
+
+  --text-primary:  #202124;
+  --text-secondary:#5F6368;
+  --text-muted:    #9AA0A6;
+  --text-on-blue:  #FFFFFF;
+
+  --blue-primary:  #1A73E8;
+  --blue-light:    #E8F0FE;
+  --blue-hover:    #1557B0;
+
+  --green:         #137333;
+  --green-bg:      #E6F4EA;
+  --amber:         #B06000;
+  --amber-bg:      #FEF7E0;
+  --red:           #C5221F;
+  --red-bg:        #FCE8E6;
+  --purple:        #6200EE;
+
+  --shadow-sm:     0 1px 2px 0 rgba(60,64,67,.1), 0 1px 3px 1px rgba(60,64,67,.08);
+  --shadow-md:     0 1px 3px 0 rgba(60,64,67,.15), 0 4px 8px 3px rgba(60,64,67,.1);
+}
+
+/* =========================================
+   Tema Escuro (Google Cloud Dark)
+   ========================================= */
+.dark {
+  --bg-page:       #1A1A1C;
+  --bg-card:       #292A2D;
+  --bg-sidebar:    #292A2D;
+  --bg-header:     #292A2D;
+  --bg-input:      #333438;
+  --bg-code:       #1E1E20;
+  --bg-hover:      #3C3D41;
+  --bg-selected:   #1E3A5F;
+  --bg-badge:      #1A3A5C;
+
+  --border:        #3C3D41;
+  --border-focus:  #8AB4F8;
+  --border-strong: #5F6368;
+
+  --text-primary:  #E8EAED;
+  --text-secondary:#9AA0A6;
+  --text-muted:    #5F6368;
+  --text-on-blue:  #202124;
+
+  --blue-primary:  #8AB4F8;
+  --blue-light:    #1E3A5F;
+  --blue-hover:    #A8C7FA;
+
+  --green:         #81C995;
+  --green-bg:      #12281A;
+  --amber:         #FDD663;
+  --amber-bg:      #2D2600;
+  --red:           #F28B82;
+  --red-bg:        #2D1210;
+  --purple:        #BB86FC;
+
+  --shadow-sm:     0 1px 2px 0 rgba(0,0,0,.2), 0 1px 3px 1px rgba(0,0,0,.15);
+  --shadow-md:     0 1px 3px 0 rgba(0,0,0,.25), 0 4px 8px 3px rgba(0,0,0,.15);
+}
+
+/* Registrar variáveis no theme do Tailwind v4 */
+@theme inline {
+  --color-bg-page:      var(--bg-page);
+  --color-bg-card:      var(--bg-card);
+  --color-bg-sidebar:   var(--bg-sidebar);
+  --color-bg-header:    var(--bg-header);
+  --color-bg-input:     var(--bg-input);
+  --color-bg-code:      var(--bg-code);
+  --color-bg-hover:     var(--bg-hover);
+  --color-bg-selected:  var(--bg-selected);
+  --color-border:       var(--border);
+  --color-border-focus: var(--border-focus);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary:var(--text-secondary);
+  --color-text-muted:   var(--text-muted);
+  --color-blue-primary: var(--blue-primary);
+  --color-blue-light:   var(--blue-light);
+  --color-blue-hover:   var(--blue-hover);
+  --color-gcp-green:    var(--green);
+  --color-gcp-green-bg: var(--green-bg);
+  --color-gcp-amber:    var(--amber);
+  --color-gcp-amber-bg: var(--amber-bg);
+  --color-gcp-red:      var(--red);
+  --color-gcp-red-bg:   var(--red-bg);
+  --color-gcp-purple:   var(--purple);
+}
+
+/* Dark mode via classe */
+@variant dark (&:where(.dark, .dark *));
+
+/* =========================================
+   Estilos Globais
+   ========================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* =========================================
+   Scrollbar compacta
+   ========================================= */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* =========================================
+   Utilitários Globais - Google Cloud Style
+   ========================================= */
+.label-compact {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.input-gcp {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  line-height: 1.4;
+}
+
+.input-gcp:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+
+.dark .input-gcp:focus {
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.15);
+}
+
+.btn-primary {
+  background-color: var(--blue-primary);
+  color: var(--text-on-blue);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary:hover {
+  background-color: var(--blue-hover);
+  box-shadow: 0 1px 2px 0 rgba(26,115,232,0.3);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-hover);
+}
