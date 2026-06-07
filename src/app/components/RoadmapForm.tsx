@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Roadmap, Trimestre, RoadmapStatus } from '@/domain/entities/Roadmap';
+import { Roadmap, Trimestre, RoadmapStatus, RoadmapCategoria, RoadmapPrioridade } from '@/domain/entities/Roadmap';
 
 interface RoadmapFormProps {
   applicationId: string;
@@ -13,7 +13,12 @@ interface RoadmapFormProps {
 export default function RoadmapForm({ applicationId, initialData, onSubmit, onCancel }: RoadmapFormProps) {
   const [atividade, setAtividade] = useState('');
   const [detalhamento, setDetalhamento] = useState('');
+  const [categoria, setCategoria] = useState<RoadmapCategoria>('Evolução técnica');
+  const [prioridade, setPrioridade] = useState<RoadmapPrioridade>('Média');
+  const [dataPrevistaInicio, setDataPrevistaInicio] = useState('');
   const [dataPrevistaFinalizacao, setDataPrevistaFinalizacao] = useState('');
+  const [responsavel, setResponsavel] = useState('');
+  const [observacoes, setObservacoes] = useState('');
   const [trimestre, setTrimestre] = useState<Trimestre>('Q1');
   const [ano, setAno] = useState<number>(2026);
   const [status, setStatus] = useState<RoadmapStatus>('Backlog');
@@ -22,11 +27,16 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
     if (initialData) {
       setAtividade(initialData.atividade || '');
       setDetalhamento(initialData.detalhamento || '');
+      setCategoria(initialData.categoria || 'Evolução técnica');
+      setPrioridade(initialData.prioridade || 'Média');
+      setDataPrevistaInicio(initialData.data_prevista_inicio || '');
       setDataPrevistaFinalizacao(initialData.data_prevista_finalizacao || '');
+      setResponsavel(initialData.responsavel || '');
+      setObservacoes(initialData.observacoes || '');
       setTrimestre(initialData.trimestre || 'Q1');
       setAno(initialData.ano || 2026);
       setStatus(initialData.status || 'Backlog');
-    } else { setAtividade(''); setDetalhamento(''); setDataPrevistaFinalizacao(''); setTrimestre('Q1'); setAno(2026); setStatus('Backlog'); }
+    } else { setAtividade(''); setDetalhamento(''); setCategoria('Evolução técnica'); setPrioridade('Média'); setDataPrevistaInicio(''); setDataPrevistaFinalizacao(''); setResponsavel(''); setObservacoes(''); setTrimestre('Q1'); setAno(2026); setStatus('Backlog'); }
   }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,7 +47,12 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
       application_id: applicationId,
       atividade: atividade.trim(),
       detalhamento: detalhamento.trim() || null,
+      categoria,
+      prioridade,
+      data_prevista_inicio: dataPrevistaInicio || null,
       data_prevista_finalizacao: dataPrevistaFinalizacao || null,
+      responsavel: responsavel.trim() || null,
+      observacoes: observacoes.trim() || null,
       trimestre,
       ano,
       status,
@@ -68,12 +83,7 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
             rows={3} className="input-gcp resize-none" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="label-compact">Data Prevista de Finalização</label>
-            <input type="date" value={dataPrevistaFinalizacao} onChange={e => setDataPrevistaFinalizacao(e.target.value)}
-              className="input-gcp" />
-          </div>
+        <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="label-compact">Status</label>
             <select value={status} onChange={e => setStatus(e.target.value as RoadmapStatus)} className="input-gcp">
@@ -84,9 +94,45 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
               <option value="Done">Concluído</option>
             </select>
           </div>
+          <div>
+            <label className="label-compact">Categoria</label>
+            <select value={categoria} onChange={e => setCategoria(e.target.value as RoadmapCategoria)} className="input-gcp">
+              <option value="Evolução técnica">Evolução técnica</option>
+              <option value="Melhoria operacional">Melhoria operacional</option>
+              <option value="Segurança">Segurança</option>
+              <option value="Governança">Governança</option>
+              <option value="Fiscal">Fiscal</option>
+              <option value="Infraestrutura">Infraestrutura</option>
+            </select>
+          </div>
+          <div>
+            <label className="label-compact">Prioridade</label>
+            <select value={prioridade} onChange={e => setPrioridade(e.target.value as RoadmapPrioridade)} className="input-gcp">
+              <option value="Baixa">Baixa</option>
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+              <option value="Crítica">Crítica</option>
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="label-compact">Data Prevista de Início</label>
+            <input type="date" value={dataPrevistaInicio} onChange={e => setDataPrevistaInicio(e.target.value)} className="input-gcp" />
+          </div>
+          <div>
+            <label className="label-compact">Data Prevista de Finalização</label>
+            <input type="date" value={dataPrevistaFinalizacao} onChange={e => setDataPrevistaFinalizacao(e.target.value)} className="input-gcp" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="label-compact">Responsável</label>
+            <input type="text" value={responsavel} onChange={e => setResponsavel(e.target.value)}
+              placeholder="Nome da pessoa responsável" className="input-gcp" />
+          </div>
           <div>
             <label className="label-compact">Trimestre</label>
             <select value={trimestre} onChange={e => setTrimestre(e.target.value as Trimestre)} className="input-gcp">
@@ -96,10 +142,18 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
               <option value="Q4">Q4 (Out–Dez)</option>
             </select>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="label-compact">Ano</label>
             <input type="number" required value={ano} onChange={e => setAno(Number(e.target.value))}
               min={2020} max={2035} className="input-gcp" />
+          </div>
+          <div>
+            <label className="label-compact">Observações</label>
+            <input type="text" value={observacoes} onChange={e => setObservacoes(e.target.value)}
+              placeholder="Observações adicionais..." className="input-gcp" />
           </div>
         </div>
 

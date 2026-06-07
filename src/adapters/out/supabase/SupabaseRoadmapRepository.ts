@@ -1,6 +1,6 @@
 import { RoadmapRepositoryPort } from '@/ports/outgoing/RoadmapRepositoryPort';
 import { Roadmap } from '@/domain/entities/Roadmap';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseRoadmapRepository implements RoadmapRepositoryPort {
@@ -11,21 +11,10 @@ export class SupabaseRoadmapRepository implements RoadmapRepositoryPort {
         .orderRoadmap();
     }
 
-    const { data, error } = await supabase
-      .from('roadmap')
-      .select('*')
-      .eq('application_id', applicationId)
-      .order('ano', { ascending: true })
-      .order('trimestre', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao buscar roadmap no Supabase:', error);
-      return mockDatabase.getRoadmap()
-        .filter(r => r.application_id === applicationId)
-        .orderRoadmap();
-    }
-
-    return data || [];
+    return safeSupabaseQuery(
+      () => supabase!.from('roadmap').select('*').eq('application_id', applicationId).order('ano', { ascending: true }).order('trimestre', { ascending: true }),
+      () => mockDatabase.getRoadmap().filter(r => r.application_id === applicationId).orderRoadmap()
+    );
   }
 
   async save(roadmap: Omit<Roadmap, 'id'> & { id?: string }): Promise<Roadmap> {

@@ -12,6 +12,8 @@ import { RoadmapRepositoryPort } from '@/ports/outgoing/RoadmapRepositoryPort';
 import { StackRepositoryPort } from '@/ports/outgoing/StackRepositoryPort';
 import { ClienteRepositoryPort } from '@/ports/outgoing/ClienteRepositoryPort';
 import { ClienteAtividadeRepositoryPort } from '@/ports/outgoing/ClienteAtividadeRepositoryPort';
+import { OcorrenciaRepositoryPort } from '@/ports/outgoing/OcorrenciaRepositoryPort';
+import { ConfluenceReferenceRepositoryPort } from '@/ports/outgoing/ConfluenceReferenceRepositoryPort';
 
 import { Application } from '../entities/Application';
 import { SubModule } from '../entities/SubModule';
@@ -22,6 +24,8 @@ import { Roadmap } from '../entities/Roadmap';
 import { Stack } from '../entities/Stack';
 import { Cliente } from '../entities/Cliente';
 import { ClienteAtividade } from '../entities/ClienteAtividade';
+import { Ocorrencia } from '../entities/Ocorrencia';
+import { ConfluenceReference } from '../entities/ConfluenceReference';
 
 export class ManageApplicationsService implements ManageApplicationsUseCase {
   constructor(
@@ -33,22 +37,21 @@ export class ManageApplicationsService implements ManageApplicationsUseCase {
     private roadmapRepo: RoadmapRepositoryPort,
     private stackRepo: StackRepositoryPort,
     private clienteRepo: ClienteRepositoryPort,
-    private clienteAtividadeRepo: ClienteAtividadeRepositoryPort
+    private clienteAtividadeRepo: ClienteAtividadeRepositoryPort,
+    private ocorrenciaRepo: OcorrenciaRepositoryPort,
+    private confluenceRepo: ConfluenceReferenceRepositoryPort
   ) {}
 
   async getApplicationsList(): Promise<ApplicationListItem[]> {
     const apps = await this.appRepo.findAll();
-    const items: ApplicationListItem[] = [];
+    const monitoringResults = await Promise.all(
+      apps.map(app => this.monitoringRepo.findByApplicationId(app.id))
+    );
 
-    for (const app of apps) {
-      const monitoring = await this.monitoringRepo.findByApplicationId(app.id);
-      items.push({
-        ...app,
-        monitoring
-      });
-    }
-
-    return items;
+    return apps.map((app, index) => ({
+      ...app,
+      monitoring: monitoringResults[index]
+    }));
   }
 
   async getApplicationDetails(id: string): Promise<ApplicationDetails> {
@@ -57,14 +60,16 @@ export class ManageApplicationsService implements ManageApplicationsUseCase {
       throw new Error(`Aplicação com ID ${id} não encontrada.`);
     }
 
-    const [subModules, endpoints, collaborators, monitoring, roadmap, stacks, clientes] = await Promise.all([
+    const [subModules, endpoints, collaborators, monitoring, roadmap, stacks, clientes, ocorrencias, confluenceReferences] = await Promise.all([
       this.submoduleRepo.findByApplicationId(id),
       this.endpointRepo.findByApplicationId(id),
       this.collaboratorRepo.findByApplicationId(id),
       this.monitoringRepo.findByApplicationId(id),
       this.roadmapRepo.findByApplicationId(id),
       this.stackRepo.findByApplicationId(id),
-      this.clienteRepo.findByApplicationId(id)
+      this.clienteRepo.findByApplicationId(id),
+      this.ocorrenciaRepo.findByApplicationId(id),
+      this.confluenceRepo.findByApplicationId(id)
     ]);
 
     return {
@@ -75,7 +80,9 @@ export class ManageApplicationsService implements ManageApplicationsUseCase {
       monitoring,
       roadmap,
       stacks,
-      clientes
+      clientes,
+      ocorrencias,
+      confluenceReferences
     };
   }
 
@@ -177,5 +184,29 @@ export class ManageApplicationsService implements ManageApplicationsUseCase {
 
   async deleteClienteAtividade(id: string): Promise<boolean> {
     return this.clienteAtividadeRepo.delete(id);
+  }
+
+  async getOcorrencias(applicationId: string): Promise<Ocorrencia[]> {
+    return this.ocorrenciaRepo.findByApplicationId(applicationId);
+  }
+
+  async saveOcorrencia(ocorrencia: Omit<Ocorrencia, 'id'> & { id?: string }): Promise<Ocorrencia> {
+    return this.ocorrenciaRepo.save(ocorrencia);
+  }
+
+  async deleteOcorrencia(id: string): Promise<boolean> {
+    return this.ocorrenciaRepo.delete(id);
+  }
+
+  async getConfluenceReferences(applicationId: string): Promise<ConfluenceReference[]> {
+    return this.confluenceRepo.findByApplicationId(applicationId);
+  }
+
+  async saveConfluenceReference(ref: Omit<ConfluenceReference, 'id'> & { id?: string }): Promise<ConfluenceReference> {
+    return this.confluenceRepo.save(ref);
+  }
+
+  async deleteConfluenceReference(id: string): Promise<boolean> {
+    return this.confluenceRepo.delete(id);
   }
 }

@@ -1,6 +1,6 @@
 import { ApplicationRepositoryPort } from '@/ports/outgoing/ApplicationRepositoryPort';
 import { Application } from '@/domain/entities/Application';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseApplicationRepository implements ApplicationRepositoryPort {
@@ -9,17 +9,10 @@ export class SupabaseApplicationRepository implements ApplicationRepositoryPort 
       return mockDatabase.getApplications();
     }
 
-    const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-      .order('nome', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao buscar aplicações no Supabase:', error);
-      return mockDatabase.getApplications(); // Fallback para não quebrar a tela
-    }
-
-    return data || [];
+    return safeSupabaseQuery(
+      () => supabase!.from('applications').select('*').order('nome', { ascending: true }),
+      () => mockDatabase.getApplications()
+    );
   }
 
   async findById(id: string): Promise<Application | null> {
@@ -28,19 +21,10 @@ export class SupabaseApplicationRepository implements ApplicationRepositoryPort 
       return apps.find(a => a.id === id) || null;
     }
 
-    const { data, error } = await supabase
-      .from('applications')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error(`Erro ao buscar aplicação ${id} no Supabase:`, error);
-      const apps = mockDatabase.getApplications();
-      return apps.find(a => a.id === id) || null;
-    }
-
-    return data;
+    return safeSupabaseQuery(
+      () => supabase!.from('applications').select('*').eq('id', id).single(),
+      () => mockDatabase.getApplications().find(a => a.id === id) || null
+    );
   }
 
   async save(application: Omit<Application, 'id'> & { id?: string }): Promise<Application> {
@@ -88,7 +72,6 @@ export class SupabaseApplicationRepository implements ApplicationRepositoryPort 
       const filtered = apps.filter(a => a.id !== id);
       mockDatabase.setApplications(filtered);
       
-      // Limpar dependências mockadas
       mockDatabase.setSubmodules(mockDatabase.getSubmodules().filter(s => s.application_id !== id));
       mockDatabase.setEndpoints(mockDatabase.getEndpoints().filter(e => e.application_id !== id));
       mockDatabase.setRoadmap(mockDatabase.getRoadmap().filter(r => r.application_id !== id));

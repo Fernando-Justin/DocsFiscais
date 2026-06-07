@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DocsFiscais - Gerenciador do Ecossistema",
-  description: "Gerenciador de Ecossistema de Aplicativos Fiscais com alta densidade de informações e arquitetura de dados otimizada.",
+  title: "Antigravity - Gerenciador de Aplicações",
+  description: "Sistema de apoio para gerenciamento de aplicações em ambientes de produção e homologação.",
 };
 
 export default function RootLayout({

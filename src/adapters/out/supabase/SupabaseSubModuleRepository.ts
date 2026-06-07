@@ -1,6 +1,6 @@
 import { SubModuleRepositoryPort } from '@/ports/outgoing/SubModuleRepositoryPort';
 import { SubModule } from '@/domain/entities/SubModule';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseSubModuleRepository implements SubModuleRepositoryPort {
@@ -9,18 +9,10 @@ export class SupabaseSubModuleRepository implements SubModuleRepositoryPort {
       return mockDatabase.getSubmodules().filter(s => s.application_id === applicationId);
     }
 
-    const { data, error } = await supabase
-      .from('submodules')
-      .select('*')
-      .eq('application_id', applicationId)
-      .order('nome', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao buscar sub-módulos no Supabase:', error);
-      return mockDatabase.getSubmodules().filter(s => s.application_id === applicationId);
-    }
-
-    return data || [];
+    return safeSupabaseQuery(
+      () => supabase!.from('submodules').select('*').eq('application_id', applicationId).order('nome', { ascending: true }),
+      () => mockDatabase.getSubmodules().filter(s => s.application_id === applicationId)
+    );
   }
 
   async save(subModule: Omit<SubModule, 'id'> & { id?: string }): Promise<SubModule> {

@@ -1,6 +1,6 @@
 import { StackRepositoryPort } from '@/ports/outgoing/StackRepositoryPort';
 import { Stack } from '@/domain/entities/Stack';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseStackRepository implements StackRepositoryPort {
@@ -9,20 +9,10 @@ export class SupabaseStackRepository implements StackRepositoryPort {
       return mockDatabase.getStacks().filter(s => s.application_id === applicationId);
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('stacks')
-        .select('*')
-        .eq('application_id', applicationId);
-
-      if (error) {
-        return mockDatabase.getStacks().filter(s => s.application_id === applicationId);
-      }
-
-      return data || [];
-    } catch {
-      return mockDatabase.getStacks().filter(s => s.application_id === applicationId);
-    }
+    return safeSupabaseQuery(
+      () => supabase!.from('stacks').select('*').eq('application_id', applicationId),
+      () => mockDatabase.getStacks().filter(s => s.application_id === applicationId)
+    );
   }
 
   async save(stack: Omit<Stack, 'id'> & { id?: string }): Promise<Stack> {

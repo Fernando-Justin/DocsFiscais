@@ -21,7 +21,7 @@ export default function MonitoringForm({ applicationId, initialData, onSubmit, o
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ id: initialData?.id, application_id: applicationId, grafana_url: grafanaUrl || null, datadog_url: datadogUrl || null });
+    onSubmit({ id: initialData?.id, application_id: applicationId, links: initialData?.links || [], grafana_url: grafanaUrl || null, datadog_url: datadogUrl || null });
   };
 
   return (

@@ -1,6 +1,6 @@
 import { ClienteRepositoryPort } from '@/ports/outgoing/ClienteRepositoryPort';
 import { Cliente } from '@/domain/entities/Cliente';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseClienteRepository implements ClienteRepositoryPort {
@@ -9,20 +9,10 @@ export class SupabaseClienteRepository implements ClienteRepositoryPort {
       return mockDatabase.getClientes().filter(c => c.application_id === applicationId);
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('application_id', applicationId);
-
-      if (error) {
-        return mockDatabase.getClientes().filter(c => c.application_id === applicationId);
-      }
-
-      return data || [];
-    } catch {
-      return mockDatabase.getClientes().filter(c => c.application_id === applicationId);
-    }
+    return safeSupabaseQuery(
+      () => supabase!.from('clientes').select('*').eq('application_id', applicationId),
+      () => mockDatabase.getClientes().filter(c => c.application_id === applicationId)
+    );
   }
 
   async save(cliente: Omit<Cliente, 'id'> & { id?: string }): Promise<Cliente> {

@@ -1,6 +1,6 @@
 import { MonitoringRepositoryPort } from '@/ports/outgoing/MonitoringRepositoryPort';
 import { Monitoring } from '@/domain/entities/Monitoring';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseMonitoringRepository implements MonitoringRepositoryPort {
@@ -10,19 +10,10 @@ export class SupabaseMonitoringRepository implements MonitoringRepositoryPort {
       return list.find(m => m.application_id === applicationId) || null;
     }
 
-    const { data, error } = await supabase
-      .from('monitoring')
-      .select('*')
-      .eq('application_id', applicationId)
-      .maybeSingle();
-
-    if (error) {
-      console.error(`Erro ao buscar monitoria da aplicação ${applicationId}:`, error);
-      const list = mockDatabase.getMonitoring();
-      return list.find(m => m.application_id === applicationId) || null;
-    }
-
-    return data;
+    return safeSupabaseQuery(
+      () => supabase!.from('monitoring').select('*').eq('application_id', applicationId).maybeSingle(),
+      () => mockDatabase.getMonitoring().find(m => m.application_id === applicationId) || null
+    );
   }
 
   async save(monitoring: Omit<Monitoring, 'id'> & { id?: string }): Promise<Monitoring> {

@@ -1,6 +1,6 @@
 import { EndpointRepositoryPort } from '@/ports/outgoing/EndpointRepositoryPort';
 import { Endpoint } from '@/domain/entities/Endpoint';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseEndpointRepository implements EndpointRepositoryPort {
@@ -9,18 +9,10 @@ export class SupabaseEndpointRepository implements EndpointRepositoryPort {
       return mockDatabase.getEndpoints().filter(e => e.application_id === applicationId);
     }
 
-    const { data, error } = await supabase
-      .from('endpoints')
-      .select('*')
-      .eq('application_id', applicationId)
-      .order('path', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao buscar endpoints no Supabase:', error);
-      return mockDatabase.getEndpoints().filter(e => e.application_id === applicationId);
-    }
-
-    return data || [];
+    return safeSupabaseQuery(
+      () => supabase!.from('endpoints').select('*').eq('application_id', applicationId).order('path', { ascending: true }),
+      () => mockDatabase.getEndpoints().filter(e => e.application_id === applicationId)
+    );
   }
 
   async save(endpoint: Omit<Endpoint, 'id'> & { id?: string }): Promise<Endpoint> {

@@ -1,6 +1,6 @@
 import { ClienteAtividadeRepositoryPort } from '@/ports/outgoing/ClienteAtividadeRepositoryPort';
 import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseClienteAtividadeRepository implements ClienteAtividadeRepositoryPort {
@@ -9,20 +9,10 @@ export class SupabaseClienteAtividadeRepository implements ClienteAtividadeRepos
       return mockDatabase.getClienteAtividades().filter(a => a.cliente_id === clienteId);
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('cliente_atividades')
-        .select('*')
-        .eq('cliente_id', clienteId);
-
-      if (error) {
-        return mockDatabase.getClienteAtividades().filter(a => a.cliente_id === clienteId);
-      }
-
-      return data || [];
-    } catch {
-      return mockDatabase.getClienteAtividades().filter(a => a.cliente_id === clienteId);
-    }
+    return safeSupabaseQuery(
+      () => supabase!.from('cliente_atividades').select('*').eq('cliente_id', clienteId),
+      () => mockDatabase.getClienteAtividades().filter(a => a.cliente_id === clienteId)
+    );
   }
 
   async save(atividade: Omit<ClienteAtividade, 'id'> & { id?: string }): Promise<ClienteAtividade> {

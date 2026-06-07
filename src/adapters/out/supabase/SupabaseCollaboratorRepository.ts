@@ -1,6 +1,6 @@
 import { CollaboratorRepositoryPort } from '@/ports/outgoing/CollaboratorRepositoryPort';
 import { Collaborator } from '@/domain/entities/Collaborator';
-import { supabase, isSupabaseConfigured } from './client';
+import { supabase, isSupabaseConfigured, safeSupabaseQuery } from './client';
 import { mockDatabase } from './mockDatabase';
 
 export class SupabaseCollaboratorRepository implements CollaboratorRepositoryPort {
@@ -14,25 +14,19 @@ export class SupabaseCollaboratorRepository implements CollaboratorRepositoryPor
       }));
     }
 
-    const { data: collaborators, error } = await supabase
-      .from('collaborators')
-      .select('*')
-      .order('nome', { ascending: true });
+    const collaborators = await safeSupabaseQuery(
+      () => supabase!.from('collaborators').select('*').order('nome', { ascending: true }),
+      () => []
+    );
 
-    if (error) {
-      console.error('Erro ao buscar todos os colaboradores:', error);
+    if (collaborators.length === 0) {
       return [];
     }
 
-    // Buscar relações
-    const { data: relations, error: relError } = await supabase
-      .from('application_collaborators')
-      .select('*');
-
-    if (relError) {
-      console.error('Erro ao buscar relações de colaboradores:', relError);
-      return (collaborators || []).map(c => ({ ...c, application_ids: [] }));
-    }
+    const relations = await safeSupabaseQuery(
+      () => supabase!.from('application_collaborators').select('*'),
+      () => []
+    );
 
     return (collaborators || []).map(c => {
       const appIds = relations
@@ -57,17 +51,11 @@ export class SupabaseCollaboratorRepository implements CollaboratorRepositoryPor
         }));
     }
 
-    const { data, error } = await supabase
-      .from('application_collaborators')
-      .select('collaborators(*)')
-      .eq('application_id', applicationId);
+    const data = await safeSupabaseQuery(
+      () => supabase!.from('application_collaborators').select('collaborators(*)').eq('application_id', applicationId),
+      () => []
+    );
 
-    if (error) {
-      console.error(`Erro ao buscar colaboradores da aplicação ${applicationId}:`, error);
-      return [];
-    }
-
-    // Extrair os colaboradores do retorno
     return (data || [])
       .map((item: any) => item.collaborators)
       .filter(Boolean)

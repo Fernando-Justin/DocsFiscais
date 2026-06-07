@@ -1,4 +1,4 @@
-export type AtividadeStatus = 'Pendente' | 'Em Andamento' | 'Concluída' | 'Bloqueada';
+export type AtividadeStatus = 'Pendente' | 'Em análise' | 'Em desenvolvimento' | 'Concluído' | 'Recusado';
 
 export interface ClienteAtividade {
   id: string;
@@ -7,5 +7,6 @@ export interface ClienteAtividade {
   status: AtividadeStatus;
   data_prevista_inicio: string | null;
   data_prevista_conclusao: string | null;
+  observacao: string | null;
   created_at?: string;
 }

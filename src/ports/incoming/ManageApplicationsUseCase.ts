@@ -7,6 +7,8 @@ import { Roadmap } from '@/domain/entities/Roadmap';
 import { Stack } from '@/domain/entities/Stack';
 import { Cliente } from '@/domain/entities/Cliente';
 import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
+import { Ocorrencia } from '@/domain/entities/Ocorrencia';
+import { ConfluenceReference } from '@/domain/entities/ConfluenceReference';
 
 export interface ApplicationDetails {
   application: Application;
@@ -17,6 +19,8 @@ export interface ApplicationDetails {
   roadmap: Roadmap[];
   stacks: Stack[];
   clientes: Cliente[];
+  ocorrencias: Ocorrencia[];
+  confluenceReferences: ConfluenceReference[];
 }
 
 export interface ApplicationListItem extends Application {
@@ -59,4 +63,12 @@ export interface ManageApplicationsUseCase {
   getClienteAtividades(clienteId: string): Promise<ClienteAtividade[]>;
   saveClienteAtividade(atividade: Omit<ClienteAtividade, 'id'> & { id?: string }): Promise<ClienteAtividade>;
   deleteClienteAtividade(id: string): Promise<boolean>;
+
+  getOcorrencias(applicationId: string): Promise<Ocorrencia[]>;
+  saveOcorrencia(ocorrencia: Omit<Ocorrencia, 'id'> & { id?: string }): Promise<Ocorrencia>;
+  deleteOcorrencia(id: string): Promise<boolean>;
+
+  getConfluenceReferences(applicationId: string): Promise<ConfluenceReference[]>;
+  saveConfluenceReference(ref: Omit<ConfluenceReference, 'id'> & { id?: string }): Promise<ConfluenceReference>;
+  deleteConfluenceReference(id: string): Promise<boolean>;
 }

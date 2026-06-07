@@ -22,26 +22,36 @@ create table if not exists submodules (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. Endpoints
+-- 3. Endpoints (with new fields: parameters, response, auth, status, environment)
 create table if not exists endpoints (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade not null,
   submodule_id uuid references submodules(id) on delete set null,
-  metodo text not null, -- GET, POST, PUT, DELETE, PATCH, etc.
+  metodo text not null,
   path text not null,
   descricao text,
-  payload_exemplo text, -- Armazenado como string JSON
+  parametros text,
+  payload_exemplo text,
+  exemplo_response text,
+  status_codes text,
+  auth_exigida boolean default false,
+  auth_tipo text,
+  ambiente_disponivel text default 'Ambos',
+  status text default 'Ativo',
   comando_curl text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 4. Collaborators
+-- 4. Collaborators (with new fields: status, contato, nivel_acesso)
 create table if not exists collaborators (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   squad text not null,
-  papel text not null, -- mantenedor/dev
+  papel text not null,
   email text not null,
+  contato text,
+  status text not null default 'Ativo',
+  nivel_acesso text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -52,7 +62,7 @@ create table if not exists application_collaborators (
   primary key (application_id, collaborator_id)
 );
 
--- 5. Monitoring
+-- 5. Monitoring (with nested links support)
 create table if not exists monitoring (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade unique not null,
@@ -61,38 +71,56 @@ create table if not exists monitoring (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 6. Roadmap
+-- Monitoring Links (individual monitoring system entries)
+create table if not exists monitoring_links (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid references applications(id) on delete cascade not null,
+  nome text not null,
+  url text not null,
+  descricao text,
+  responsavel text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 6. Roadmap (with new fields: categoria, prioridade, data_inicio, responsavel, observacoes)
 create table if not exists roadmap (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade not null,
   atividade text not null,
   detalhamento text,
+  categoria text not null default 'Evolução técnica',
+  prioridade text not null default 'Média',
+  data_prevista_inicio date,
   data_prevista_finalizacao date,
-  trimestre text not null, -- Q1, Q2, Q3, Q4
+  trimestre text not null,
   ano integer not null,
-  status text not null, -- Backlog, In Progress, Done, Homologação, Bloqueado
+  status text not null default 'Backlog',
+  responsavel text,
+  observacoes text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 7. Stack
+-- 7. Stack (with expanded categories)
 create table if not exists stacks (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade not null,
   nome text not null,
   versao text not null default '',
-  categoria text not null, -- linguagem, framework, banco_dados
-  status text not null default 'Em Uso', -- Em Uso, Em Migração, Descontinuado, Em Avaliação
+  categoria text not null,
+  status text not null default 'Ativo',
   observacao text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 8. Clientes
+-- 8. Clientes (with nome_empresa and JSONB endpoints array)
 create table if not exists clientes (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade not null,
+  nome_empresa text,
   area_referencia text not null,
   contato text not null,
-  status text not null default 'Ativo', -- Ativo, Bloqueado, Inativo, Em Homologação
+  status text not null default 'Ativo',
+  endpoints jsonb default '[]'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -101,8 +129,40 @@ create table if not exists cliente_atividades (
   id uuid primary key default gen_random_uuid(),
   cliente_id uuid references clientes(id) on delete cascade not null,
   descritivo text not null,
-  status text not null default 'Pendente', -- Pendente, Em Andamento, Concluída, Bloqueada
+  status text not null default 'Pendente',
   data_prevista_inicio date,
   data_prevista_conclusao date,
+  observacao text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 10. Ocorrências / Incidentes (new)
+create table if not exists ocorrencias (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid references applications(id) on delete cascade not null,
+  titulo text not null,
+  tipo text not null,
+  ambiente text not null,
+  ofensor text not null,
+  ofensor_outro text,
+  data_hora_inicio timestamp with time zone not null,
+  data_hora_normalizacao timestamp with time zone,
+  tempo_total_minutos integer,
+  status text not null default 'Em andamento',
+  acoes_tomadas text,
+  observacoes text,
+  registrado_por text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 11. Confluence References (new)
+create table if not exists confluence_references (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid references applications(id) on delete cascade not null,
+  titulo text not null,
+  url text not null,
+  categoria text not null,
+  descricao text,
+  ultima_atualizacao date,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

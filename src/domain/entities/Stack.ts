@@ -1,5 +1,14 @@
-export type StackCategoria = 'linguagem' | 'framework' | 'banco_dados';
-export type StackStatus = 'Em Uso' | 'Em Migração' | 'Descontinuado' | 'Em Avaliação';
+export type StackCategoria =
+  | 'Linguagem'
+  | 'Framework'
+  | 'Banco de Dados'
+  | 'Infraestrutura'
+  | 'Mensageria'
+  | 'Observabilidade'
+  | 'Segurança'
+  | 'Outro';
+
+export type StackStatus = 'Ativo' | 'Em atualização' | 'Depreciado' | 'Em avaliação';
 
 export interface Stack {
   id: string;

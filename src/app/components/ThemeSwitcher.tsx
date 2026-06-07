@@ -7,8 +7,7 @@ export default function ThemeSwitcher() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Ler preferência salva ou usar preferência do sistema
-    const saved = localStorage.getItem("docsfiscais-theme");
+    const saved = localStorage.getItem("antigravity-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const shouldBeDark = saved ? saved === "dark" : prefersDark;
     setIsDark(shouldBeDark);
@@ -19,7 +18,7 @@ export default function ThemeSwitcher() {
     const next = !isDark;
     setIsDark(next);
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("docsfiscais-theme", next ? "dark" : "light");
+    localStorage.setItem("antigravity-theme", next ? "dark" : "light");
   };
 
   return (
