@@ -6,16 +6,21 @@ import { SubModule } from '@/domain/entities/SubModule';
 import { Endpoint } from '@/domain/entities/Endpoint';
 import { Collaborator } from '@/domain/entities/Collaborator';
 import { Roadmap, Trimestre } from '@/domain/entities/Roadmap';
+import { Stack } from '@/domain/entities/Stack';
+import { Cliente } from '@/domain/entities/Cliente';
+import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
 import {
   BookOpen, Users, Settings, Calendar, Plus,
   ChevronDown, ChevronRight, Copy, Check, ExternalLink,
-  Trash2, Edit, BarChart3
+  Trash2, Edit, BarChart3, Download, Cpu, UserCheck
 } from 'lucide-react';
 import CollaboratorSection from './CollaboratorSection';
 import MonitoringForm from './MonitoringForm';
 import SubModuleForm from './SubModuleForm';
 import EndpointForm from './EndpointForm';
 import RoadmapForm from './RoadmapForm';
+import StackForm from './StackForm';
+import ClienteSection from './ClienteSection';
 
 interface AppDetailsProps {
   details: ApplicationDetails;
@@ -33,9 +38,16 @@ interface AppDetailsProps {
   onSaveRoadmap: (data: Omit<Roadmap, 'id'> & { id?: string }) => Promise<void>;
   onDeleteRoadmap: (id: string) => Promise<void>;
   onUpdateAppBasic: (data: any) => Promise<void>;
+  onSaveStack: (data: Omit<Stack, 'id'> & { id?: string }) => Promise<void>;
+  onDeleteStack: (id: string) => Promise<void>;
+  onSaveCliente: (data: Omit<Cliente, 'id'> & { id?: string }) => Promise<void>;
+  onDeleteCliente: (id: string) => Promise<void>;
+  onSaveClienteAtividade: (data: Omit<ClienteAtividade, 'id'> & { id?: string }) => Promise<void>;
+  onDeleteClienteAtividade: (id: string) => Promise<void>;
+  onLoadClienteAtividades: (clienteId: string) => Promise<ClienteAtividade[]>;
 }
 
-type TabType = 'docs' | 'team' | 'env' | 'roadmap';
+type TabType = 'docs' | 'team' | 'env' | 'stack' | 'clientes' | 'roadmap';
 
 const METHOD_STYLES: Record<string, { bg: string; color: string; border: string }> = {
   GET:     { bg: 'var(--gcp-green-bg)',  color: 'var(--gcp-green)',  border: 'var(--gcp-green)' },
@@ -50,12 +62,16 @@ const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   'Done':        { bg: 'var(--gcp-green-bg)',  color: 'var(--gcp-green)' },
   'In Progress': { bg: 'var(--blue-light)',    color: 'var(--blue-primary)' },
   'Backlog':     { bg: 'var(--bg-hover)',      color: 'var(--text-secondary)' },
+  'Homologação': { bg: 'var(--gcp-amber-bg)', color: 'var(--gcp-amber)' },
+  'Bloqueado':   { bg: 'var(--gcp-red-bg)',   color: 'var(--gcp-red)' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
   'Done': 'Concluído',
   'In Progress': 'Em Andamento',
   'Backlog': 'Backlog',
+  'Homologação': 'Homologação',
+  'Bloqueado': 'Bloqueado',
 };
 
 export default function AppDetails({
@@ -74,6 +90,13 @@ export default function AppDetails({
   onSaveRoadmap,
   onDeleteRoadmap,
   onUpdateAppBasic,
+  onSaveStack,
+  onDeleteStack,
+  onSaveCliente,
+  onDeleteCliente,
+  onSaveClienteAtividade,
+  onDeleteClienteAtividade,
+  onLoadClienteAtividades,
 }: AppDetailsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('docs');
   const [expandedEndpoints, setExpandedEndpoints] = useState<Record<string, boolean>>({});
@@ -86,6 +109,7 @@ export default function AppDetails({
   const [editingEndpoint, setEditingEndpoint] = useState<Endpoint | null>(null);
   const [editingRoadmap, setEditingRoadmap] = useState<Roadmap | null>(null);
   const [isEditingBasic, setIsEditingBasic] = useState(false);
+  const [clienteAtividades, setClienteAtividades] = useState<Record<string, ClienteAtividade[]>>({});
 
   const [basicNome, setBasicNome] = useState(details.application.nome);
   const [basicProposito, setBasicProposito] = useState(details.application.proposito || '');
@@ -118,7 +142,44 @@ export default function AppDetails({
     setIsEditingBasic(false);
   };
 
-  const { application, subModules, endpoints, collaborators, monitoring, roadmap } = details;
+  const handleLoadClienteAtividades = async (clienteId: string) => {
+    const atividades = await onLoadClienteAtividades(clienteId);
+    setClienteAtividades(prev => ({ ...prev, [clienteId]: atividades }));
+  };
+
+  const handleSaveClienteAtividade = async (clienteId: string, data: Omit<ClienteAtividade, 'id'> & { id?: string }) => {
+    await onSaveClienteAtividade(data);
+    await handleLoadClienteAtividades(clienteId);
+  };
+
+  const handleDeleteClienteAtividade = async (id: string) => {
+    if (!confirm("Excluir atividade?")) return;
+    await onDeleteClienteAtividade(id);
+    setClienteAtividades(prev => {
+      const updated = { ...prev };
+      for (const key of Object.keys(updated)) {
+        updated[key] = updated[key].filter(a => a.id !== id);
+      }
+      return updated;
+    });
+  };
+
+  const handleExportRoadmap = () => {
+    const rows = [['Atividade', 'Detalhamento', 'Data Prevista Finalização', 'Trimestre', 'Ano', 'Status']];
+    details.roadmap.forEach(r => {
+      rows.push([r.atividade, r.detalhamento || '', r.data_prevista_finalizacao || '', r.trimestre, String(r.ano), STATUS_LABELS[r.status] || r.status]);
+    });
+    const csv = rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `roadmap-${details.application.nome.replace(/\s+/g, '-').toLowerCase()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const { application, subModules, endpoints, collaborators, monitoring, roadmap, stacks, clientes } = details;
 
   const roadmapByQuarter: Record<Trimestre, Roadmap[]> = { Q1: [], Q2: [], Q3: [], Q4: [] };
   roadmap.forEach(item => { if (roadmapByQuarter[item.trimestre]) roadmapByQuarter[item.trimestre].push(item); });
@@ -127,6 +188,8 @@ export default function AppDetails({
     { id: 'docs', label: 'Documentação / Endpoints', icon: <BookOpen size={13} /> },
     { id: 'team', label: 'Equipe', icon: <Users size={13} />, badge: collaborators.length },
     { id: 'env',  label: 'Monitoria & Ambientes',  icon: <Settings size={13} /> },
+    { id: 'stack', label: 'Stack', icon: <Cpu size={13} />, badge: stacks.length },
+    { id: 'clientes', label: 'Clientes', icon: <UserCheck size={13} />, badge: clientes.length },
     { id: 'roadmap', label: 'Roadmap', icon: <Calendar size={13} />, badge: roadmap.length },
   ];
 
@@ -215,13 +278,13 @@ export default function AppDetails({
       </div>
 
       {/* Abas */}
-      <div className="flex border-b shrink-0"
+      <div className="flex border-b shrink-0 overflow-x-auto"
         style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 text-[12px] font-medium border-b-2 transition-all duration-100"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 text-[12px] font-medium border-b-2 transition-all duration-100 whitespace-nowrap"
             style={{
               borderBottomColor: activeTab === tab.id ? "var(--blue-primary)" : "transparent",
               color: activeTab === tab.id ? "var(--blue-primary)" : "var(--text-secondary)",
@@ -302,7 +365,7 @@ export default function AppDetails({
               </div>
             </div>
 
-            {/* Endpoints (Swagger) */}
+            {/* Endpoints */}
             <div className="rounded-lg border overflow-hidden"
               style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)", boxShadow: "var(--shadow-sm)" }}>
               <div className="flex items-center justify-between px-3 py-2 border-b"
@@ -402,10 +465,10 @@ export default function AppDetails({
 
                           {ep.payload_exemplo && (
                             <div>
-              <div className="text-[10px] font-semibold tracking-wider mb-1.5"
-                style={{ color: "var(--text-muted)" }}>
-                EXEMPLO DE PAYLOAD
-              </div>
+                              <div className="text-[10px] font-semibold tracking-wider mb-1.5"
+                                style={{ color: "var(--text-muted)" }}>
+                                EXEMPLO DE PAYLOAD
+                              </div>
                               <pre className="rounded border p-2.5 overflow-x-auto text-[11px] font-mono leading-relaxed"
                                 style={{ backgroundColor: "var(--bg-code)", borderColor: "var(--border)", color: "var(--blue-primary)" }}>
                                 {ep.payload_exemplo}
@@ -463,7 +526,6 @@ export default function AppDetails({
         {/* TAB: Monitoria & Ambientes */}
         {activeTab === 'env' && (
           <div className="space-y-3">
-            {/* Ambientes */}
             <div className="grid grid-cols-2 gap-3">
               {/* HML */}
               <div className="rounded-lg border p-3"
@@ -519,6 +581,31 @@ export default function AppDetails({
           </div>
         )}
 
+        {/* TAB: Stack */}
+        {activeTab === 'stack' && (
+          <StackForm
+            applicationId={application.id}
+            stacks={stacks}
+            onSave={onSaveStack}
+            onDelete={onDeleteStack}
+          />
+        )}
+
+        {/* TAB: Clientes */}
+        {activeTab === 'clientes' && (
+          <ClienteSection
+            applicationId={application.id}
+            clientes={clientes}
+            endpoints={endpoints}
+            onSaveCliente={onSaveCliente}
+            onDeleteCliente={onDeleteCliente}
+            onSaveAtividade={handleSaveClienteAtividade}
+            onDeleteAtividade={handleDeleteClienteAtividade}
+            atividadesMap={clienteAtividades}
+            onLoadAtividades={handleLoadClienteAtividades}
+          />
+        )}
+
         {/* TAB: Roadmap */}
         {activeTab === 'roadmap' && (
           <div className="space-y-3">
@@ -527,11 +614,18 @@ export default function AppDetails({
                 <h4 className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>Roadmap</h4>
                 <p className="text-[11px]" style={{ color: "var(--text-secondary)" }}>Planejamento estratégico de entregas por trimestre</p>
               </div>
-              <button
-                onClick={() => { setEditingRoadmap(null); setShowRoadmapForm(!showRoadmapForm); }}
-                className="btn-secondary flex items-center gap-1.5 text-[11px]">
-                <Plus size={11} /> Nova Atividade
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportRoadmap}
+                  className="btn-secondary flex items-center gap-1.5 text-[11px]">
+                  <Download size={11} /> Exportar CSV
+                </button>
+                <button
+                  onClick={() => { setEditingRoadmap(null); setShowRoadmapForm(!showRoadmapForm); }}
+                  className="btn-secondary flex items-center gap-1.5 text-[11px]">
+                  <Plus size={11} /> Nova Atividade
+                </button>
+              </div>
             </div>
 
             {showRoadmapForm && (
@@ -563,7 +657,7 @@ export default function AppDetails({
                       </span>
                     </div>
 
-                    <div className="flex-1 p-2 space-y-1.5 overflow-y-auto" style={{ maxHeight: 320 }}>
+                    <div className="flex-1 p-2 space-y-1.5 overflow-y-auto" style={{ maxHeight: 420 }}>
                       {items.length === 0 ? (
                         <div className="text-center py-6 text-[11px] rounded border border-dashed"
                           style={{ color: "var(--text-muted)", borderColor: "var(--border)" }}>
@@ -577,17 +671,28 @@ export default function AppDetails({
                             <p className="text-[12px] font-medium leading-snug" style={{ color: "var(--text-primary)" }}>
                               {item.atividade}
                             </p>
-                            <div className="flex items-center justify-between">
+                            {item.detalhamento && (
+                              <p className="text-[11px] leading-snug" style={{ color: "var(--text-secondary)" }}>
+                                {item.detalhamento}
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded"
                                 style={{ backgroundColor: ss.bg, color: ss.color }}>
                                 {STATUS_LABELS[item.status] || item.status}
                               </span>
-                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setEditingRoadmap(item); setShowRoadmapForm(true); }}
-                                  style={{ color: "var(--blue-primary)" }}><Edit size={10} /></button>
-                                <button onClick={() => onDeleteRoadmap(item.id)}
-                                  style={{ color: "var(--gcp-red)" }}><Trash2 size={10} /></button>
-                              </div>
+                              {item.data_prevista_finalizacao && (
+                                <span className="text-[9px] font-mono px-1 py-0.5 rounded"
+                                  style={{ backgroundColor: "var(--bg-hover)", color: "var(--text-muted)" }}>
+                                  {item.data_prevista_finalizacao}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => { setEditingRoadmap(item); setShowRoadmapForm(true); }}
+                                style={{ color: "var(--blue-primary)" }}><Edit size={10} /></button>
+                              <button onClick={() => onDeleteRoadmap(item.id)}
+                                style={{ color: "var(--gcp-red)" }}><Trash2 size={10} /></button>
                             </div>
                           </div>
                         );

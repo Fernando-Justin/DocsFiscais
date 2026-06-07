@@ -4,8 +4,10 @@ import { Endpoint } from '@/domain/entities/Endpoint';
 import { Collaborator } from '@/domain/entities/Collaborator';
 import { Monitoring } from '@/domain/entities/Monitoring';
 import { Roadmap } from '@/domain/entities/Roadmap';
+import { Stack } from '@/domain/entities/Stack';
+import { Cliente } from '@/domain/entities/Cliente';
+import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
 
-// Helper para gerenciar estados em localStorage (se rodando no client)
 const isBrowser = typeof window !== 'undefined';
 
 const getStorageItem = <T>(key: string, defaultValue: T): T => {
@@ -20,7 +22,6 @@ const setStorageItem = <T>(key: string, value: T): void => {
   }
 };
 
-// Dados Iniciais de Demonstração (Wow Factor)
 const initialApps: Application[] = [
   {
     id: 'app-1',
@@ -111,7 +112,6 @@ const initialCollaborators: Collaborator[] = [
   { id: 'col-3', nome: 'Ana Souza', squad: 'Squad Channels & Portal', papel: 'dev', email: 'ana.souza@company.com' }
 ];
 
-// Associação Colaborador x Aplicação
 interface AppCollaboratorRelation {
   application_id: string;
   collaborator_id: string;
@@ -146,34 +146,70 @@ const initialMonitoring: Monitoring[] = [
 ];
 
 const initialRoadmap: Roadmap[] = [
-  { id: 'road-1', application_id: 'app-2', atividade: 'Integração com adquirente Stone API', trimestre: 'Q1', ano: 2026, status: 'Done' },
-  { id: 'road-2', application_id: 'app-2', atividade: 'Upgrade de Segurança PCI-DSS Compliance', trimestre: 'Q2', ano: 2026, status: 'In Progress' },
-  { id: 'road-3', application_id: 'app-2', atividade: 'Suporte a pagamentos instantâneos via Pix Pix2Pix', trimestre: 'Q3', ano: 2026, status: 'Backlog' },
-  { id: 'road-4', application_id: 'app-1', atividade: 'Redesenho de acessibilidade WCAG 2.1', trimestre: 'Q1', ano: 2026, status: 'Done' },
-  { id: 'road-5', application_id: 'app-1', atividade: 'Implementação de Login Social (Google/Apple)', trimestre: 'Q2', ano: 2026, status: 'In Progress' },
-  { id: 'road-6', application_id: 'app-3', atividade: 'Integração com WhatsApp Business API', trimestre: 'Q3', ano: 2026, status: 'Backlog' },
-  { id: 'road-7', application_id: 'app-3', atividade: 'Otimização de consumo e envio em lote', trimestre: 'Q4', ano: 2026, status: 'Backlog' }
+  { id: 'road-1', application_id: 'app-2', atividade: 'Integração com adquirente Stone API', detalhamento: 'Integração completa incluindo fluxo de pagamento, estorno e conciliação.', data_prevista_finalizacao: '2026-03-31', trimestre: 'Q1', ano: 2026, status: 'Done' },
+  { id: 'road-2', application_id: 'app-2', atividade: 'Upgrade de Segurança PCI-DSS Compliance', detalhamento: 'Atualização de certificação PCI-DSS versão 4.0 com melhorias de criptografia.', data_prevista_finalizacao: '2026-06-30', trimestre: 'Q2', ano: 2026, status: 'In Progress' },
+  { id: 'road-3', application_id: 'app-2', atividade: 'Suporte a pagamentos instantâneos via Pix', detalhamento: 'Implementação do fluxo Pix Pix2Pix com QR Code dinâmico e estático.', data_prevista_finalizacao: '2026-09-30', trimestre: 'Q3', ano: 2026, status: 'Backlog' },
+  { id: 'road-4', application_id: 'app-1', atividade: 'Redesenho de acessibilidade WCAG 2.1', detalhamento: null, data_prevista_finalizacao: null, trimestre: 'Q1', ano: 2026, status: 'Done' },
+  { id: 'road-5', application_id: 'app-1', atividade: 'Implementação de Login Social (Google/Apple)', detalhamento: 'Integração OAuth2 com Google Sign-in e Apple Sign-in.', data_prevista_finalizacao: '2026-04-30', trimestre: 'Q2', ano: 2026, status: 'In Progress' },
+  { id: 'road-6', application_id: 'app-3', atividade: 'Integração com WhatsApp Business API', detalhamento: 'Canal de notificação via WhatsApp Business API para alertas transacionais.', data_prevista_finalizacao: null, trimestre: 'Q3', ano: 2026, status: 'Bloqueado' },
+  { id: 'road-7', application_id: 'app-3', atividade: 'Otimização de consumo e envio em lote', detalhamento: null, data_prevista_finalizacao: null, trimestre: 'Q4', ano: 2026, status: 'Backlog' }
+];
+
+const initialStacks: Stack[] = [
+  { id: 'stack-1', application_id: 'app-1', nome: 'React', versao: '19.2', categoria: 'framework', status: 'Em Uso', observacao: 'Framework principal do frontend' },
+  { id: 'stack-2', application_id: 'app-1', nome: 'TypeScript', versao: '5.7', categoria: 'linguagem', status: 'Em Uso', observacao: null },
+  { id: 'stack-3', application_id: 'app-2', nome: 'Node.js', versao: '22', categoria: 'linguagem', status: 'Em Uso', observacao: 'Runtime principal da API' },
+  { id: 'stack-4', application_id: 'app-2', nome: 'PostgreSQL', versao: '16', categoria: 'banco_dados', status: 'Em Uso', observacao: null },
+  { id: 'stack-5', application_id: 'app-2', nome: 'Express.js', versao: '4.21', categoria: 'framework', status: 'Em Uso', observacao: null },
+  { id: 'stack-6', application_id: 'app-2', nome: 'Redis', versao: '7.4', categoria: 'banco_dados', status: 'Em Uso', observacao: 'Cache distribuído' },
+  { id: 'stack-7', application_id: 'app-3', nome: 'Python', versao: '3.13', categoria: 'linguagem', status: 'Em Migração', observacao: 'Migrando de Node.js para Python' },
+  { id: 'stack-8', application_id: 'app-3', nome: 'RabbitMQ', versao: '4.0', categoria: 'banco_dados', status: 'Em Uso', observacao: 'Message broker principal' }
+];
+
+const initialClientes: Cliente[] = [
+  { id: 'cli-1', application_id: 'app-1', area_referencia: 'Squad Checkout', contato: 'maria.silva@company.com', status: 'Ativo' },
+  { id: 'cli-2', application_id: 'app-1', area_referencia: 'Vertical Financeiro', contato: 'joao.santos@company.com', status: 'Ativo' },
+  { id: 'cli-3', application_id: 'app-2', area_referencia: 'Squad Core API', contato: 'ana.beatriz@company.com', status: 'Ativo' },
+  { id: 'cli-4', application_id: 'app-2', area_referencia: 'Produto Gestão', contato: 'carlos.edu@company.com', status: 'Em Homologação' },
+  { id: 'cli-5', application_id: 'app-3', area_referencia: 'Área de Negócio', contato: 'pedro.lima@company.com', status: 'Inativo' }
+];
+
+const initialClienteAtividades: ClienteAtividade[] = [
+  { id: 'atv-1', cliente_id: 'cli-1', descritivo: 'Migração de layout do dashboard financeiro', status: 'Em Andamento', data_prevista_inicio: '2026-01-15', data_prevista_conclusao: '2026-02-28' },
+  { id: 'atv-2', cliente_id: 'cli-1', descritivo: 'Configuração de novo relatório de vendas', status: 'Pendente', data_prevista_inicio: '2026-03-01', data_prevista_conclusao: '2026-03-15' },
+  { id: 'atv-3', cliente_id: 'cli-3', descritivo: 'Integração com novo adquirente', status: 'Em Andamento', data_prevista_inicio: '2026-01-10', data_prevista_conclusao: '2026-04-30' },
+  { id: 'atv-4', cliente_id: 'cli-4', descritivo: 'Homologação de ambiente de produção', status: 'Pendente', data_prevista_inicio: '2026-02-01', data_prevista_conclusao: '2026-02-28' },
+  { id: 'atv-5', cliente_id: 'cli-5', descritivo: 'Reativação de acesso ao sistema', status: 'Bloqueada', data_prevista_inicio: null, data_prevista_conclusao: null }
 ];
 
 export const mockDatabase = {
   getApplications: () => getStorageItem<Application[]>('applications', initialApps),
   setApplications: (val: Application[]) => setStorageItem('applications', val),
-  
+
   getSubmodules: () => getStorageItem<SubModule[]>('submodules', initialSubmodules),
   setSubmodules: (val: SubModule[]) => setStorageItem('submodules', val),
-  
+
   getEndpoints: () => getStorageItem<Endpoint[]>('endpoints', initialEndpoints),
   setEndpoints: (val: Endpoint[]) => setStorageItem('endpoints', val),
-  
+
   getCollaborators: () => getStorageItem<Collaborator[]>('collaborators', initialCollaborators),
   setCollaborators: (val: Collaborator[]) => setStorageItem('collaborators', val),
-  
+
   getRelations: () => getStorageItem<AppCollaboratorRelation[]>('relations', initialRelations),
   setRelations: (val: AppCollaboratorRelation[]) => setStorageItem('relations', val),
-  
+
   getMonitoring: () => getStorageItem<Monitoring[]>('monitoring', initialMonitoring),
   setMonitoring: (val: Monitoring[]) => setStorageItem('monitoring', val),
-  
+
   getRoadmap: () => getStorageItem<Roadmap[]>('roadmap', initialRoadmap),
-  setRoadmap: (val: Roadmap[]) => setStorageItem('roadmap', val)
+  setRoadmap: (val: Roadmap[]) => setStorageItem('roadmap', val),
+
+  getStacks: () => getStorageItem<Stack[]>('stacks', initialStacks),
+  setStacks: (val: Stack[]) => setStorageItem('stacks', val),
+
+  getClientes: () => getStorageItem<Cliente[]>('clientes', initialClientes),
+  setClientes: (val: Cliente[]) => setStorageItem('clientes', val),
+
+  getClienteAtividades: () => getStorageItem<ClienteAtividade[]>('cliente_atividades', initialClienteAtividades),
+  setClienteAtividades: (val: ClienteAtividade[]) => setStorageItem('cliente_atividades', val),
 };

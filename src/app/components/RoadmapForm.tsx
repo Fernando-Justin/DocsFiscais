@@ -12,6 +12,8 @@ interface RoadmapFormProps {
 
 export default function RoadmapForm({ applicationId, initialData, onSubmit, onCancel }: RoadmapFormProps) {
   const [atividade, setAtividade] = useState('');
+  const [detalhamento, setDetalhamento] = useState('');
+  const [dataPrevistaFinalizacao, setDataPrevistaFinalizacao] = useState('');
   const [trimestre, setTrimestre] = useState<Trimestre>('Q1');
   const [ano, setAno] = useState<number>(2026);
   const [status, setStatus] = useState<RoadmapStatus>('Backlog');
@@ -19,16 +21,27 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
   useEffect(() => {
     if (initialData) {
       setAtividade(initialData.atividade || '');
+      setDetalhamento(initialData.detalhamento || '');
+      setDataPrevistaFinalizacao(initialData.data_prevista_finalizacao || '');
       setTrimestre(initialData.trimestre || 'Q1');
       setAno(initialData.ano || 2026);
       setStatus(initialData.status || 'Backlog');
-    } else { setAtividade(''); setTrimestre('Q1'); setAno(2026); setStatus('Backlog'); }
+    } else { setAtividade(''); setDetalhamento(''); setDataPrevistaFinalizacao(''); setTrimestre('Q1'); setAno(2026); setStatus('Backlog'); }
   }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!atividade.trim()) return;
-    onSubmit({ id: initialData?.id, application_id: applicationId, atividade: atividade.trim(), trimestre, ano, status });
+    onSubmit({
+      id: initialData?.id,
+      application_id: applicationId,
+      atividade: atividade.trim(),
+      detalhamento: detalhamento.trim() || null,
+      data_prevista_finalizacao: dataPrevistaFinalizacao || null,
+      trimestre,
+      ano,
+      status,
+    });
   };
 
   return (
@@ -48,7 +61,32 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
             placeholder="Ex: Upgrade de Segurança PCI-DSS" className="input-gcp" />
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label className="label-compact">Detalhamento</label>
+          <textarea value={detalhamento} onChange={e => setDetalhamento(e.target.value)}
+            placeholder="Descrição detalhada da atividade, entregas esperadas e observações..."
+            rows={3} className="input-gcp resize-none" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="label-compact">Data Prevista de Finalização</label>
+            <input type="date" value={dataPrevistaFinalizacao} onChange={e => setDataPrevistaFinalizacao(e.target.value)}
+              className="input-gcp" />
+          </div>
+          <div>
+            <label className="label-compact">Status</label>
+            <select value={status} onChange={e => setStatus(e.target.value as RoadmapStatus)} className="input-gcp">
+              <option value="Backlog">Backlog</option>
+              <option value="In Progress">Em Andamento</option>
+              <option value="Homologação">Homologação</option>
+              <option value="Bloqueado">Bloqueado</option>
+              <option value="Done">Concluído</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="label-compact">Trimestre</label>
             <select value={trimestre} onChange={e => setTrimestre(e.target.value as Trimestre)} className="input-gcp">
@@ -62,14 +100,6 @@ export default function RoadmapForm({ applicationId, initialData, onSubmit, onCa
             <label className="label-compact">Ano</label>
             <input type="number" required value={ano} onChange={e => setAno(Number(e.target.value))}
               min={2020} max={2035} className="input-gcp" />
-          </div>
-          <div>
-            <label className="label-compact">Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value as RoadmapStatus)} className="input-gcp">
-              <option value="Backlog">Backlog</option>
-              <option value="In Progress">Em Andamento</option>
-              <option value="Done">Concluído</option>
-            </select>
           </div>
         </div>
 

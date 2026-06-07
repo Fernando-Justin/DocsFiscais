@@ -7,6 +7,9 @@ import { Application } from '@/domain/entities/Application';
 import { SubModule } from '@/domain/entities/SubModule';
 import { Endpoint } from '@/domain/entities/Endpoint';
 import { Roadmap } from '@/domain/entities/Roadmap';
+import { Stack } from '@/domain/entities/Stack';
+import { Cliente } from '@/domain/entities/Cliente';
+import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
 import { isSupabaseConfigured } from '@/adapters/out/supabase/client';
 import AppForm from './components/AppForm';
 import AppDetails from './components/AppDetails';
@@ -156,6 +159,42 @@ export default function Home() {
     if (!selectedAppId || !confirm("Excluir atividade do roadmap?")) return;
     await almService.deleteRoadmapItem(id);
     await loadDetails(selectedAppId);
+  };
+
+  const handleSaveStack = async (data: Omit<Stack, 'id'> & { id?: string }) => {
+    if (!selectedAppId) return;
+    await almService.saveStack(data);
+    await loadDetails(selectedAppId);
+  };
+
+  const handleDeleteStack = async (id: string) => {
+    if (!confirm("Excluir item da stack?")) return;
+    await almService.deleteStack(id);
+    if (selectedAppId) await loadDetails(selectedAppId);
+  };
+
+  const handleSaveCliente = async (data: Omit<Cliente, 'id'> & { id?: string }) => {
+    if (!selectedAppId) return;
+    await almService.saveCliente(data);
+    await loadDetails(selectedAppId);
+  };
+
+  const handleDeleteCliente = async (id: string) => {
+    if (!confirm("Excluir cliente?")) return;
+    await almService.deleteCliente(id);
+    if (selectedAppId) await loadDetails(selectedAppId);
+  };
+
+  const handleSaveClienteAtividade = async (data: Omit<ClienteAtividade, 'id'> & { id?: string }) => {
+    await almService.saveClienteAtividade(data);
+  };
+
+  const handleDeleteClienteAtividade = async (id: string) => {
+    await almService.deleteClienteAtividade(id);
+  };
+
+  const handleLoadClienteAtividades = async (clienteId: string): Promise<ClienteAtividade[]> => {
+    return almService.getClienteAtividades(clienteId);
   };
 
   const filteredApps = apps.filter(app =>
@@ -388,6 +427,13 @@ export default function Home() {
                 onSaveRoadmap={handleSaveRoadmap}
                 onDeleteRoadmap={handleDeleteRoadmap}
                 onUpdateAppBasic={handleUpdateAppBasic}
+                onSaveStack={handleSaveStack}
+                onDeleteStack={handleDeleteStack}
+                onSaveCliente={handleSaveCliente}
+                onDeleteCliente={handleDeleteCliente}
+                onSaveClienteAtividade={handleSaveClienteAtividade}
+                onDeleteClienteAtividade={handleDeleteClienteAtividade}
+                onLoadClienteAtividades={handleLoadClienteAtividades}
               />
             </div>
           ) : (

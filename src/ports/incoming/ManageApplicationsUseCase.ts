@@ -4,6 +4,9 @@ import { Endpoint } from '@/domain/entities/Endpoint';
 import { Collaborator } from '@/domain/entities/Collaborator';
 import { Monitoring } from '@/domain/entities/Monitoring';
 import { Roadmap } from '@/domain/entities/Roadmap';
+import { Stack } from '@/domain/entities/Stack';
+import { Cliente } from '@/domain/entities/Cliente';
+import { ClienteAtividade } from '@/domain/entities/ClienteAtividade';
 
 export interface ApplicationDetails {
   application: Application;
@@ -12,6 +15,8 @@ export interface ApplicationDetails {
   collaborators: Collaborator[];
   monitoring: Monitoring | null;
   roadmap: Roadmap[];
+  stacks: Stack[];
+  clientes: Cliente[];
 }
 
 export interface ApplicationListItem extends Application {
@@ -21,7 +26,7 @@ export interface ApplicationListItem extends Application {
 export interface ManageApplicationsUseCase {
   getApplicationsList(): Promise<ApplicationListItem[]>;
   getApplicationDetails(id: string): Promise<ApplicationDetails>;
-  
+
   createApplication(application: Omit<Application, 'id'>): Promise<Application>;
   updateApplication(id: string, application: Partial<Application>): Promise<Application>;
   deleteApplication(id: string): Promise<boolean>;
@@ -39,7 +44,19 @@ export interface ManageApplicationsUseCase {
   deleteCollaborator(id: string): Promise<boolean>;
 
   saveMonitoring(monitoring: Omit<Monitoring, 'id'> & { id?: string }): Promise<Monitoring>;
-  
+
   saveRoadmapItem(roadmap: Omit<Roadmap, 'id'> & { id?: string }): Promise<Roadmap>;
   deleteRoadmapItem(id: string): Promise<boolean>;
+
+  getStacks(applicationId: string): Promise<Stack[]>;
+  saveStack(stack: Omit<Stack, 'id'> & { id?: string }): Promise<Stack>;
+  deleteStack(id: string): Promise<boolean>;
+
+  getClientes(applicationId: string): Promise<Cliente[]>;
+  saveCliente(cliente: Omit<Cliente, 'id'> & { id?: string }): Promise<Cliente>;
+  deleteCliente(id: string): Promise<boolean>;
+
+  getClienteAtividades(clienteId: string): Promise<ClienteAtividade[]>;
+  saveClienteAtividade(atividade: Omit<ClienteAtividade, 'id'> & { id?: string }): Promise<ClienteAtividade>;
+  deleteClienteAtividade(id: string): Promise<boolean>;
 }

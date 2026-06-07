@@ -66,8 +66,43 @@ create table if not exists roadmap (
   id uuid primary key default gen_random_uuid(),
   application_id uuid references applications(id) on delete cascade not null,
   atividade text not null,
+  detalhamento text,
+  data_prevista_finalizacao date,
   trimestre text not null, -- Q1, Q2, Q3, Q4
   ano integer not null,
-  status text not null, -- Backlog, In Progress, Done
+  status text not null, -- Backlog, In Progress, Done, Homologação, Bloqueado
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 7. Stack
+create table if not exists stacks (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid references applications(id) on delete cascade not null,
+  nome text not null,
+  versao text not null default '',
+  categoria text not null, -- linguagem, framework, banco_dados
+  status text not null default 'Em Uso', -- Em Uso, Em Migração, Descontinuado, Em Avaliação
+  observacao text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 8. Clientes
+create table if not exists clientes (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid references applications(id) on delete cascade not null,
+  area_referencia text not null,
+  contato text not null,
+  status text not null default 'Ativo', -- Ativo, Bloqueado, Inativo, Em Homologação
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 9. Atividades dos Clientes
+create table if not exists cliente_atividades (
+  id uuid primary key default gen_random_uuid(),
+  cliente_id uuid references clientes(id) on delete cascade not null,
+  descritivo text not null,
+  status text not null default 'Pendente', -- Pendente, Em Andamento, Concluída, Bloqueada
+  data_prevista_inicio date,
+  data_prevista_conclusao date,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

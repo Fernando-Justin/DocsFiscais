@@ -1,2 +1,27 @@
 
 kbpmXSQ4iFLbVkVu
+
+
+
+
+Associado a aplicação vamos criar novos controles, segue os registros que devem está associado a aplicacao: 
+
+1) Stack:  
+   Conjunto de tecnologias utilizada na aplicacao com status e versoes, tais como:  
+       linguagens de programação
+       frameworks 
+       bancos de dados 
+
+2) Lista de Clientes de Clientes que utilizam a aplicacao:
+     Área de Referencia (Squad ou Vertical ou Produto ou Área de Negocio e outros), 
+     Contato, Status (Ativo, Bloqueado, Inativo, Em Homologacao), 
+     Lista de Atividades Pendênte para o Cliente como:
+        Descritivo, Status e data Prevista de Inicio e Prevista para Conclusão 
+     Lista de Endpoint/Serviço que clientes utilizam na aplicação 
+
+Ajustar as opções de Status do RoadMap da Aplicação, acrescentar: Homologação, Bloqueado 
+No RoadMap abaixo de "Atividade Macro *", acrescentar um campo de detalhamento do RoadMap, campo de observação mais detalhada da atividade do RoadMap,
+Acrescentar a data Prevista para Finalização do RoadMap  
+
+Na tela de RoadMap, criar opção de exportação do RoadMap 
+
