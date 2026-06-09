@@ -7,7 +7,7 @@ import { Collaborator } from '@/domain/entities/Collaborator';
 import { getStatusStyle } from './statusStyles';
 import {
   Plus, Trash2, ExternalLink, Activity, Clock, AlertTriangle,
-  Search, BarChart3, Database, Globe
+  Search, BarChart3, Database, Globe, Pencil
 } from 'lucide-react';
 
 interface MonitoringSectionProps {
@@ -46,6 +46,7 @@ export default function MonitoringSection({
   const [monGrafana, setMonGrafana] = useState(monitoring?.grafana_url || '');
   const [monDatadog, setMonDatadog] = useState(monitoring?.datadog_url || '');
 
+  const [editingOcorrenciaId, setEditingOcorrenciaId] = useState<string | null>(null);
   const [ocTitulo, setOcTitulo] = useState('');
   const [ocTipo, setOcTipo] = useState<OcorrenciaTipo>('Erro funcional');
   const [ocAmbiente, setOcAmbiente] = useState<OcorrenciaAmbiente>('Produção');
@@ -61,10 +62,35 @@ export default function MonitoringSection({
   const [ocRegistradoPor, setOcRegistradoPor] = useState('');
 
   const resetOcorrenciaForm = () => {
+    setEditingOcorrenciaId(null);
     setOcTitulo(''); setOcTipo('Erro funcional'); setOcAmbiente('Produção');
     setOcOfensor('Não identificado'); setOcOfensorOutro('');
     setOcDataInicio(''); setOcHoraInicio(''); setOcDataFim(''); setOcHoraFim('');
     setOcStatus('Em andamento'); setOcAcoes(''); setOcObservacoes(''); setOcRegistradoPor('');
+  };
+
+  const startEditOcorrencia = (oc: Ocorrencia) => {
+    setEditingOcorrenciaId(oc.id);
+    setOcTitulo(oc.titulo);
+    setOcTipo(oc.tipo);
+    setOcAmbiente(oc.ambiente);
+    setOcOfensor(oc.ofensor);
+    setOcOfensorOutro(oc.ofensor_outro || '');
+    const inicio = new Date(oc.data_hora_inicio);
+    setOcDataInicio(inicio.toISOString().slice(0, 10));
+    setOcHoraInicio(inicio.toISOString().slice(11, 16));
+    if (oc.data_hora_normalizacao) {
+      const fim = new Date(oc.data_hora_normalizacao);
+      setOcDataFim(fim.toISOString().slice(0, 10));
+      setOcHoraFim(fim.toISOString().slice(11, 16));
+    } else {
+      setOcDataFim(''); setOcHoraFim('');
+    }
+    setOcStatus(oc.status);
+    setOcAcoes(oc.acoes_tomadas || '');
+    setOcObservacoes(oc.observacoes || '');
+    setOcRegistradoPor(oc.registrado_por || '');
+    setShowOcorrenciaForm(true);
   };
 
   const handleMonitoringSubmit = async (e: React.FormEvent) => {
@@ -84,6 +110,7 @@ export default function MonitoringSection({
     const fim = (ocDataFim && ocHoraFim) ? new Date(`${ocDataFim}T${ocHoraFim}`).toISOString() : null;
     const tempoMinutos = fim ? Math.round((new Date(fim).getTime() - new Date(inicio).getTime()) / 60000) : null;
     await onSaveOcorrencia({
+      id: editingOcorrenciaId || undefined,
       application_id: applicationId, titulo: ocTitulo.trim(), tipo: ocTipo, ambiente: ocAmbiente,
       ofensor: ocOfensor, ofensor_outro: ocOfensor === 'Outro' ? ocOfensorOutro.trim() || null : null,
       data_hora_inicio: inicio, data_hora_normalizacao: fim,
@@ -183,7 +210,10 @@ export default function MonitoringSection({
               <span className="text-[12px] font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
                 <Activity size={12} /> Histórico de Ocorrências
               </span>
-              <button onClick={() => { resetOcorrenciaForm(); setShowOcorrenciaForm(!showOcorrenciaForm); }}
+              <button onClick={() => {
+                if (showOcorrenciaForm) { setShowOcorrenciaForm(false); resetOcorrenciaForm(); }
+                else { resetOcorrenciaForm(); setShowOcorrenciaForm(true); }
+              }}
                 className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--blue-primary)' }}>
                 <Plus size={11} /> Nova Ocorrência
               </button>
@@ -273,9 +303,12 @@ export default function MonitoringSection({
                     </div>
                   )}
                 </div>
-                <div className="flex justify-end gap-2 pt-1.5 border-t" style={{ borderColor: 'var(--border)' }}>
-                  <button type="button" onClick={() => { setShowOcorrenciaForm(false); resetOcorrenciaForm(); }} className="btn-secondary text-[11px]">Cancelar</button>
-                  <button type="submit" className="btn-primary text-[11px]">Registrar Ocorrência</button>
+                <div className="flex items-center justify-between pt-1.5 border-t" style={{ borderColor: 'var(--border)' }}>
+                  {editingOcorrenciaId && <span className="text-[11px]" style={{ color: 'var(--gcp-amber)' }}>Editando ocorrência</span>}
+                  <div className="flex gap-2 ml-auto">
+                    <button type="button" onClick={() => { setShowOcorrenciaForm(false); resetOcorrenciaForm(); }} className="btn-secondary text-[11px]">Cancelar</button>
+                    <button type="submit" className="btn-primary text-[11px]">{editingOcorrenciaId ? 'Salvar' : 'Registrar Ocorrência'}</button>
+                  </div>
                 </div>
               </form>
             )}
@@ -310,11 +343,22 @@ export default function MonitoringSection({
                         </p>
                       )}
                     </div>
-                    <button onClick={() => onDeleteOcorrencia(oc.id)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 shrink-0 ml-2"
-                      style={{ color: 'var(--gcp-red)' }}>
-                      <Trash2 size={11} />
-                    </button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 shrink-0 ml-2">
+                      <button onClick={() => startEditOcorrencia(oc)}
+                        className="p-0.5 rounded transition-colors"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--blue-primary)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                        title="Editar">
+                        <Pencil size={11} />
+                      </button>
+                      <button onClick={() => onDeleteOcorrencia(oc.id)}
+                        className="p-0.5 rounded"
+                        style={{ color: 'var(--gcp-red)' }}
+                        title="Excluir">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
