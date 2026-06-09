@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Antigravity - Gerenciador de Aplicações",
+  title: "Gestão de Aplicação",
   description: "Sistema de apoio para gerenciamento de aplicações em ambientes de produção e homologação.",
 };
 

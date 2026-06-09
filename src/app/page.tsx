@@ -16,10 +16,11 @@ import { isSupabaseConfigured } from '@/adapters/out/supabase/client';
 import AppForm from './components/AppForm';
 import AppDetails from './components/AppDetails';
 import ThemeSwitcher from './components/ThemeSwitcher';
+import Link from 'next/link';
 import {
   Search, Plus, Layers, Database, Users, Trash2,
   ChevronRight, CheckCircle2, AlertTriangle, LayoutGrid,
-  FileText, Rocket
+  FileText, Rocket, Info
 } from 'lucide-react';
 
 export default function Home() {
@@ -255,7 +256,7 @@ export default function Home() {
             </div>
             <div>
               <div className="font-medium text-sm leading-none" style={{ color: 'var(--text-primary)' }}>
-                Antigravity
+                Gestão de Aplicação
               </div>
               <div className="text-[10px] leading-none mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                 Gerenciador de Aplicações
@@ -271,6 +272,10 @@ export default function Home() {
                 <span style={{ color: 'var(--blue-primary)' }}>{selectedDetails.application.nome}</span>
               </>
             )}
+            <span className="mx-1" style={{ color: 'var(--text-muted)' }}>|</span>
+            <Link href="/about" className="hover:underline cursor-pointer flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+              <Info size={11} /> Sobre
+            </Link>
           </nav>
         </div>
 
@@ -423,7 +428,7 @@ export default function Home() {
                 </div>
                 <div>
                   <h2 className="text-lg font-medium mb-1.5" style={{ color: 'var(--text-primary)' }}>
-                    Bem-vindo ao Antigravity
+                    Gestão de Aplicação
                   </h2>
                   <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     Selecione uma aplicação na barra lateral para visualizar e gerenciar sua documentação, time, roadmap e monitoramento.
